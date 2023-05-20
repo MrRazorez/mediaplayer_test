@@ -111,7 +111,7 @@ export default function Player() {
   };
 
   return (
-    <>
+    <View style={styles.container}>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={handlePlayback}>
           <Text style={styles.buttonText}>
@@ -151,11 +151,17 @@ export default function Player() {
         }}
       />
       <Text style={styles.status}>{formatPosition(position)}</Text>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
