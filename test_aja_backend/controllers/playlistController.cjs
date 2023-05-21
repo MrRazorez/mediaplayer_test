@@ -1,12 +1,39 @@
-const playlistData = [
-  { id: '1', title: 'Song 1' },
-  { id: '2', title: 'Song 2' },
-  { id: '3', title: 'Song 3' },
-  { id: '4', title: 'Song 4' },
-  { id: '5', title: 'Song 5' },
-  { id: '6', title: 'Song 6' },
-];
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('playlist.db');
+
+db.run('CREATE TABLE IF NOT EXISTS playlist (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT)');
 
 exports.getPlaylist = (req, res) => {
-  res.json({playlist: playlistData});
-}
+    db.all('SELECT * FROM playlist', (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to fetch playlist' });
+      }
+  
+      const playlist = rows.map((row) => ({ id: row.id, title: row.title }));
+  
+      return res.json({ playlist });
+    });
+  };
+  
+
+exports.savePlaylist = (req, res) => {
+    const { title } = req.body;
+  
+    if (!title) {
+        return res.status(400).json({ error: 'Invalid data' });
+    }
+  
+    db.run('INSERT INTO playlist (title) VALUES (?)', [title]);
+  
+    return res.status(200).json({ message: 'Song saved successfully' });
+};
+
+exports.closeDatabase = () => {
+    db.close((err) => {
+      if (err) {
+        console.error(err.message);
+      }
+      console.log('Database connection closed.');
+    });
+};
+  
