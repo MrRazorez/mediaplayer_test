@@ -12,4 +12,9 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
+process.on('SIGTERM', () => {
+  playlistController.closeDatabase();
+  process.exit(0);
+});
+
 module.exports = router;

@@ -10,8 +10,8 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator>
-        <Tab.Screen name="MediaPlayer" component={Player} />
-        <Tab.Screen name="PlaylistScreen" component={PlaylistScreen} />
+        <Tab.Screen name="Media Player" component={Player} />
+        <Tab.Screen name="Playlist" component={PlaylistScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

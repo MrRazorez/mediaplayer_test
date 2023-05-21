@@ -26,13 +26,9 @@ const PlaylistScreen = () => {
     console.log('Lagu dipilih:', song.title);
   };
 
-  const openModal = () => {
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-  };
+  const handleModal = () => {
+    setModalVisible(!modalVisible);
+  }
 
   const handleSongTitleChange = (text) => {
     setSongTitle(text);
@@ -47,7 +43,7 @@ const PlaylistScreen = () => {
         setIsLoading(false);
         fetchPlaylist();
         setSongTitle('');
-        closeModal();
+        handleModal();
       })
       .catch(error => {
         console.error(error);
@@ -73,7 +69,7 @@ const PlaylistScreen = () => {
 
       <TouchableOpacity
         style={styles.uploadButton}
-        onPress={openModal}
+        onPress={handleModal}
       >
         <Text style={styles.uploadButtonText}>Upload Playlist</Text>
       </TouchableOpacity>
@@ -81,7 +77,7 @@ const PlaylistScreen = () => {
       <Modal
         visible={modalVisible}
         animationType="slide"
-        onRequestClose={closeModal}
+        onRequestClose={handleModal}
       >
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Upload Song</Text>
@@ -98,7 +94,7 @@ const PlaylistScreen = () => {
           />
           <Button
             title="Cancel"
-            onPress={closeModal}
+            onPress={handleModal}
             color="red"
           />
         </View>

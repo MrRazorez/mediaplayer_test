@@ -14,7 +14,6 @@ exports.getPlaylist = (req, res) => {
       return res.json({ playlist });
     });
   };
-  
 
 exports.savePlaylist = (req, res) => {
     const { title } = req.body;
