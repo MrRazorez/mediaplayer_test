@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { selectSong } from '../controllers/songSlice';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Button } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 
 const PlaylistScreen = () => {
+  const dispatch = useDispatch();
   const [playlistData, setPlaylistData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -25,7 +28,7 @@ const PlaylistScreen = () => {
   };
 
   const handleSongPress = (song) => {
-    console.log('Lagu dipilih:', song.title);
+    dispatch(selectSong(song.title));
   };
 
   const handleModal = () => {
@@ -56,7 +59,11 @@ const PlaylistScreen = () => {
     });
   
     axios
-      .post('http://10.0.2.2:3000/api/playlist', formData)
+      .post('http://10.0.2.2:3000/api/playlist', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      })
       .then((response) => {
         console.log(response.data.message);
         setIsLoading(false);

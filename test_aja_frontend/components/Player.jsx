@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Text, View, TouchableOpacity } from 'react-native';
 import { StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Audio } from 'expo-av';
 
 export default function Player() {
+    const selectedSongUri = useSelector((state) => state.song.value);
     const [audio, setAudio] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
@@ -13,23 +15,24 @@ export default function Player() {
 
     useEffect(() => {
         if (audio) {
-        audio.setOnPlaybackStatusUpdate((status) => {
-            setPosition(status.positionMillis);
-            setDuration(status.durationMillis);
+            audio.setOnPlaybackStatusUpdate((status) => {
+                setPosition(status.positionMillis);
+                setDuration(status.durationMillis);
 
-            if (status.positionMillis >= status.durationMillis) {
-            stopSound();
-            }
-        });
+                if (status.positionMillis >= status.durationMillis) {
+                stopSound();
+                }
+            });
         }
     }, [audio, position]);
 
     const stopAndReset = async () => {
         if (audio && (isPlaying || isPaused)) {
-        await audio.stopAsync();
-        setIsPlaying(false);
-        setIsPaused(false);
+            await audio.stopAsync();
+            setIsPlaying(false);
+            setIsPaused(false);
         }
+        setAudio(null);
     };
 
     const updatePositionAndPlay = async (value) => {
@@ -46,36 +49,38 @@ export default function Player() {
     };
 
     const playSound = async () => {
-        try {
-        await stopAndReset();
-        const { sound } = await Audio.Sound.createAsync({
-            uri: 'http://10.0.2.2:3000/api/music/1684824536714-tulus_gajah.mp3',
-        });
-        setAudio(sound);
-        await sound.playAsync();
-        setIsPlaying(true);
-        } catch (error) {
-        alert(error);
+        if (selectedSongUri) {
+            try {
+                await stopAndReset();
+                const { sound } = await Audio.Sound.createAsync({
+                    uri: `http://10.0.2.2:3000/api/music/${selectedSongUri}`,
+                });
+                setAudio(sound);
+                await sound.playAsync();
+                setIsPlaying(true);
+            } catch (error) {
+                alert(error);
+            }
         }
     };
 
     const handlePlayback = async () => {
         if (audio) {
-        if (isPlaying) {
-            if (isPaused) {
-            await audio.playAsync();
-            setIsPaused(false);
+            if (isPlaying) {
+                if (isPaused) {
+                await audio.playAsync();
+                setIsPaused(false);
+                } else {
+                await audio.pauseAsync();
+                setIsPaused(true);
+                }
             } else {
-            await audio.pauseAsync();
-            setIsPaused(true);
+                await stopAndReset();
+                await audio.playAsync();
+                setIsPlaying(true);
             }
         } else {
-            await stopAndReset();
-            await audio.playAsync();
-            setIsPlaying(true);
-        }
-        } else {
-        playSound();
+            playSound();
         }
     };
 
