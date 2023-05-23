@@ -11,6 +11,7 @@ const PlaylistScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [songTitle, setSongTitle] = useState('');
+  const [songOriTitle, setSongOriTitle] = useState('');
   const [songUri, setSongUri] = useState(null);
 
   useEffect(() => {
@@ -27,12 +28,16 @@ const PlaylistScreen = () => {
       });
   };
 
-  const handleSongPress = (song) => {
-    dispatch(selectSong(song.title));
+  const handleSongPress = (data) => {
+    dispatch(selectSong(data.song));
   };
 
   const handleModal = () => {
     setModalVisible(!modalVisible);
+  };
+
+  const handleSongTitleChange = (event) => {
+    setSongTitle(event.nativeEvent.text);
   };
 
   const handleFilePick = async () => {
@@ -41,21 +46,30 @@ const PlaylistScreen = () => {
       if (file.type === 'success') {
         setSongUri(file.uri);
         setSongTitle(file.name);
-      }      
-      handleModal();
+        setSongOriTitle(file.name);
+        handleModal();
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
+  const handleResetForm = () => {
+    setSongTitle('');
+    setSongOriTitle('');
+    setSongUri(null);
+    handleModal();
+  }
+
   const handleUploadSong = () => {
     setIsLoading(true);
   
     const formData = new FormData();
+    formData.append('title', songTitle);
     formData.append('song', {
       uri: songUri,
       type: 'audio/*',
-      name: songTitle,
+      name: songOriTitle,
     });
   
     axios
@@ -68,9 +82,7 @@ const PlaylistScreen = () => {
         console.log(response.data.message);
         setIsLoading(false);
         fetchPlaylist();
-        setSongTitle('');
-        setSongUri(null);
-        handleModal();
+        handleResetForm();
       })
       .catch((error) => {
         console.error(error);
@@ -107,10 +119,10 @@ const PlaylistScreen = () => {
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Upload Song</Text>
           <TextInput
-            editable={false}
             style={styles.input}
             placeholder="Song Title"
             defaultValue={songTitle}
+            onChange={handleSongTitleChange}
           />
           <Button
             title={isLoading ? 'Uploading...' : 'Upload'}
@@ -119,7 +131,7 @@ const PlaylistScreen = () => {
           />
           <Button
             title="Cancel"
-            onPress={handleModal}
+            onPress={handleResetForm}
             color="red"
           />
         </View>
