@@ -1,2 +1,4 @@
 *.db
 uploads/
+yarn.lock
+package-lock.json
