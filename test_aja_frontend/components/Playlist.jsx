@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, Button } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 
 const PlaylistScreen = () => {
@@ -7,6 +8,7 @@ const PlaylistScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [songTitle, setSongTitle] = useState('');
+  const [songUri, setSongUri] = useState(null);
 
   useEffect(() => {
     fetchPlaylist();
@@ -28,28 +30,46 @@ const PlaylistScreen = () => {
 
   const handleModal = () => {
     setModalVisible(!modalVisible);
-  }
+  };
 
-  const handleSongTitleChange = (text) => {
-    setSongTitle(text);
+  const handleFilePick = async () => {
+    try {
+      const file = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
+      if (file.type === 'success') {
+        setSongUri(file.uri);
+        setSongTitle(file.name);
+      }      
+      handleModal();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleUploadSong = () => {
     setIsLoading(true);
-
-    axios.post('http://10.0.2.2:3000/api/playlist', { title: songTitle })
-      .then(response => {
+  
+    const formData = new FormData();
+    formData.append('song', {
+      uri: songUri,
+      type: 'audio/*',
+      name: songTitle,
+    });
+  
+    axios
+      .post('http://10.0.2.2:3000/api/playlist', formData)
+      .then((response) => {
         console.log(response.data.message);
         setIsLoading(false);
         fetchPlaylist();
         setSongTitle('');
+        setSongUri(null);
         handleModal();
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error);
         setIsLoading(false);
       });
-  };
+  };  
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleSongPress(item)}>
@@ -66,14 +86,12 @@ const PlaylistScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
       />
-
       <TouchableOpacity
         style={styles.uploadButton}
-        onPress={handleModal}
+        onPress={handleFilePick}
       >
         <Text style={styles.uploadButtonText}>Upload Playlist</Text>
       </TouchableOpacity>
-
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -82,10 +100,10 @@ const PlaylistScreen = () => {
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Upload Song</Text>
           <TextInput
+            editable={false}
             style={styles.input}
             placeholder="Song Title"
-            value={songTitle}
-            onChangeText={handleSongTitleChange}
+            defaultValue={songTitle}
           />
           <Button
             title={isLoading ? 'Uploading...' : 'Upload'}

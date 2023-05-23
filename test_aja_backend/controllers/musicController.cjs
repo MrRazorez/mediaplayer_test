@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 exports.getMusic = (req, res) => {
-    const musicPath = 'audio/tulus_gajah.mp3';
+    const musicPath = `uploads/${req.params.song}`;
     const stat = fs.statSync(musicPath);
     const fileSize = stat.size;
     const range = req.headers.range;
