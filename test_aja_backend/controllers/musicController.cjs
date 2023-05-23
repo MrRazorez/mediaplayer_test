@@ -5,6 +5,7 @@ exports.getMusic = (req, res) => {
     const stat = fs.statSync(musicPath);
     const fileSize = stat.size;
     const range = req.headers.range;
+    const CONTENT_TYPE = 'audio/mpeg';
 
     if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
@@ -16,7 +17,7 @@ exports.getMusic = (req, res) => {
         'Content-Range': `bytes ${start}-${end}/${fileSize}`,
         'Accept-Ranges': 'bytes',
         'Content-Length': chunkSize,
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': CONTENT_TYPE,
         };
 
         res.writeHead(206, head);
@@ -24,7 +25,7 @@ exports.getMusic = (req, res) => {
     } else {
         const head = {
         'Content-Length': fileSize,
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': CONTENT_TYPE,
         };
 
         res.writeHead(200, head);

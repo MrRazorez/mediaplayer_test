@@ -7,80 +7,112 @@ import { Audio } from 'expo-av';
 
 export default function Player() {
     const selectedSongUri = useSelector((state) => state.song.value);
-    const [audio, setAudio] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-    const [position, setPosition] = useState(0);
-    const [duration, setDuration] = useState(0);
+    const [audio, setAudio] = useState({
+        instance: null,
+        isPlaying: false,
+        isPaused: false,
+        position: 0,
+        duration: 0,
+    });
 
     useEffect(() => {
-        if (audio) {
-            audio.setOnPlaybackStatusUpdate((status) => {
-                setPosition(status.positionMillis);
-                setDuration(status.durationMillis);
+        if (audio.instance) {
+        audio.instance.setOnPlaybackStatusUpdate((status) => {
+            setAudio((prevAudio) => ({
+            ...prevAudio,
+            position: status.positionMillis,
+            duration: status.durationMillis,
+            }));
 
-                if (status.positionMillis >= status.durationMillis) {
-                stopSound();
-                }
-            });
+            if (status.positionMillis >= status.durationMillis) {
+            stopSound();
+            }
+        });
         }
-    }, [audio, position]);
+    }, [audio.instance]);
 
     const stopAndReset = async () => {
-        if (audio && (isPlaying || isPaused)) {
-            await audio.stopAsync();
-            setIsPlaying(false);
-            setIsPaused(false);
+        if (audio.instance && (audio.isPlaying || audio.isPaused)) {
+        await audio.instance.stopAsync();
+        setAudio((prevAudio) => ({
+            ...prevAudio,
+            isPlaying: false,
+            isPaused: false,
+        }));
         }
-        setAudio(null);
+        setAudio((prevAudio) => ({
+        ...prevAudio,
+        instance: null,
+        }));
     };
 
     const updatePositionAndPlay = async (value) => {
-        if (audio) {
+        if (audio.instance) {
         await stopAndReset();
-        await audio.setPositionAsync(value);
-        setPosition(value);
-        if (isPlaying || isPaused) {
-            await audio.playAsync();
-            setIsPlaying(true);
-            setIsPaused(false);
+        await audio.instance.setPositionAsync(value);
+        setAudio((prevAudio) => ({
+            ...prevAudio,
+            position: value,
+        }));
+        if (audio.isPlaying || audio.isPaused) {
+            await audio.instance.playAsync();
+            setAudio((prevAudio) => ({
+            ...prevAudio,
+            isPlaying: true,
+            isPaused: false,
+            }));
         }
         }
     };
 
     const playSound = async () => {
         if (selectedSongUri) {
-            try {
-                await stopAndReset();
-                const { sound } = await Audio.Sound.createAsync({
-                    uri: `http://10.0.2.2:3000/api/music/${selectedSongUri}`,
-                });
-                setAudio(sound);
-                await sound.playAsync();
-                setIsPlaying(true);
-            } catch (error) {
-                alert(error);
-            }
+        try {
+            await stopAndReset();
+            const { sound } = await Audio.Sound.createAsync({
+            uri: `http://10.0.2.2:3000/api/music/${selectedSongUri}`,
+            });
+            setAudio((prevAudio) => ({
+            ...prevAudio,
+            instance: sound,
+            }));
+            await sound.playAsync();
+            setAudio((prevAudio) => ({
+            ...prevAudio,
+            isPlaying: true,
+            }));
+        } catch (error) {
+            alert(error);
+        }
         }
     };
 
     const handlePlayback = async () => {
-        if (audio) {
-            if (isPlaying) {
-                if (isPaused) {
-                await audio.playAsync();
-                setIsPaused(false);
-                } else {
-                await audio.pauseAsync();
-                setIsPaused(true);
-                }
+        if (audio.instance) {
+        if (audio.isPlaying) {
+            if (audio.isPaused) {
+            await audio.instance.playAsync();
+            setAudio((prevAudio) => ({
+                ...prevAudio,
+                isPaused: false,
+            }));
             } else {
-                await stopAndReset();
-                await audio.playAsync();
-                setIsPlaying(true);
+            await audio.instance.pauseAsync();
+            setAudio((prevAudio) => ({
+                ...prevAudio,
+                isPaused: true,
+            }));
             }
         } else {
-            playSound();
+            await stopAndReset();
+            await audio.instance.playAsync();
+            setAudio((prevAudio) => ({
+            ...prevAudio,
+            isPlaying: true,
+            }));
+        }
+        } else {
+        playSound();
         }
     };
 
@@ -89,31 +121,48 @@ export default function Player() {
     };
 
     const updatePosition = (value) => {
-        if (audio) {
-        audio.setPositionAsync(value);
-        setPosition(value);
-        if (isPlaying && !isPaused) {
-            audio.playAsync();
+        if (audio.instance) {
+        audio.instance.setPositionAsync(value);
+        setAudio((prevAudio) => ({
+            ...prevAudio,
+            position: value,
+        }));
+        if (audio.isPlaying && !audio.isPaused) {
+            audio.instance.playAsync();
         }
         }
     };
 
     const seekBack = async () => {
-        const newPosition = position - 5000;
+        const newPosition = audio.position - 5000;
+        if (!audio.isPlaying && !audio.isPaused) {
         await updatePositionAndPlay(newPosition >= 0 ? newPosition : 0);
+        } else {
+        updatePosition(newPosition >= 0 ? newPosition : 0);
+        }
     };
 
     const seekNext = async () => {
-        const newPosition = position + 5000;
-        await updatePositionAndPlay(newPosition <= duration ? newPosition : duration);
+        const newPosition = audio.position + 5000;
+        if (!audio.isPlaying && !audio.isPaused) {
+        await updatePositionAndPlay(
+            newPosition <= audio.duration ? newPosition : audio.duration
+        );
+        } else {
+        updatePosition(newPosition <= audio.duration ? newPosition : audio.duration);
+        }
     };
 
     const formatPosition = (position) => {
         const seconds = Math.floor((position / 1000) % 60);
         const minutes = Math.floor((position / 1000 / 60) % 60);
-        const formattedPosition = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const formattedPosition = `${minutes
+        .toString()
+        .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         return formattedPosition;
     };
+
+    const { instance, isPlaying, isPaused, position, duration } = audio;
 
     return (
         <View style={styles.container}>
@@ -158,7 +207,7 @@ export default function Player() {
         <Text style={styles.status}>{formatPosition(position)}</Text>
         </View>
     );
-}
+}  
 
 const styles = StyleSheet.create({
     container: {

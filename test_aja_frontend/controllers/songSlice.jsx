@@ -1,13 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-export const songSlice = createSlice({
+const songSlice = createSlice({
   name: 'song',
   initialState: {
     value: '',
   },
   reducers: {
     selectSong: (state, action) => {
-      state.value = action.payload
+      state.value = action.payload;
     },
   },
 });

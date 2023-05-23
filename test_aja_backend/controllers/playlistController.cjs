@@ -15,20 +15,36 @@ exports.getPlaylist = (req, res) => {
   });
 };
 
-exports.savePlaylist = (req, res) => {
+exports.savePlaylist = async (req, res) => {
   const { title } = req.body;
   const file = req.file;
 
   if (!file) {
-     return res.status(400).json({ error: 'Invalid data' });
+    return res.status(400).json({ error: 'Invalid data' });
   }
-  
-  db.run('INSERT INTO playlist (title, song) VALUES (?, ?)', [title, file.filename]);
-  
-  return res.status(200).json({ message: 'Song saved successfully' });
+
+  try {
+    await db.run('INSERT INTO playlist (title, song) VALUES (?, ?)', [
+      title,
+      file.filename,
+    ]);
+    res.status(200).json({ message: 'Song saved successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save song' });
+  }
 };
 
-exports.closeDatabase = () => {
+process.on('SIGINT', () => {
+  closeDatabase();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  closeDatabase();
+  process.exit(0);
+});
+
+const closeDatabase = () => {
   db.close((err) => {
     if (err) {
       console.error(err.message);

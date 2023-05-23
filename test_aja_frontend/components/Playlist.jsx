@@ -5,25 +5,31 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, TextInput, B
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 
-const PlaylistScreen = () => {
+export default function PlaylistScreen() {
   const dispatch = useDispatch();
-  const [playlistData, setPlaylistData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [songTitle, setSongTitle] = useState('');
-  const [songOriTitle, setSongOriTitle] = useState('');
-  const [songUri, setSongUri] = useState(null);
+  const [playlistData, setPlaylistData] = useState({
+    data: [],
+    isLoading: false,
+    modalVisible: false,
+    songTitle: '',
+    songOriTitle: '',
+    songUri: null,
+  });
 
   useEffect(() => {
     fetchPlaylist();
   }, []);
 
   const fetchPlaylist = () => {
-    axios.get('http://10.0.2.2:3000/api/playlist')
-      .then(response => {
-        setPlaylistData(response.data.playlist);
+    axios
+      .get('http://10.0.2.2:3000/api/playlist')
+      .then((response) => {
+        setPlaylistData((prevData) => ({
+          ...prevData,
+          data: response.data.playlist,
+        }));
       })
-      .catch(error => {
+      .catch((error) => {
         console.error(error);
       });
   };
@@ -33,21 +39,30 @@ const PlaylistScreen = () => {
   };
 
   const handleModal = () => {
-    setModalVisible(!modalVisible);
+    setPlaylistData((prevData) => ({
+      ...prevData,
+      modalVisible: !prevData.modalVisible,
+    }));
   };
 
   const handleSongTitleChange = (event) => {
-    setSongTitle(event.nativeEvent.text);
+    setPlaylistData((prevData) => ({
+      ...prevData,
+      songTitle: event.nativeEvent.text,
+    }));
   };
 
   const handleFilePick = async () => {
     try {
-      const file = await DocumentPicker.getDocumentAsync({ type: 'audio/*' });
+      const file = await DocumentPicker.getDocumentAsync({ type: 'audio/mpeg' });
       if (file.type === 'success') {
-        setSongUri(file.uri);
-        setSongTitle(file.name);
-        setSongOriTitle(file.name);
-        handleModal();
+        setPlaylistData((prevData) => ({
+          ...prevData,
+          songUri: file.uri,
+          songTitle: file.name,
+          songOriTitle: file.name,
+          modalVisible: true,
+        }));
       }
     } catch (error) {
       console.error(error);
@@ -55,40 +70,52 @@ const PlaylistScreen = () => {
   };
 
   const handleResetForm = () => {
-    setSongTitle('');
-    setSongOriTitle('');
-    setSongUri(null);
-    handleModal();
-  }
+    setPlaylistData((prevData) => ({
+      ...prevData,
+      songTitle: '',
+      songOriTitle: '',
+      songUri: null,
+      modalVisible: false,
+    }));
+  };
 
   const handleUploadSong = () => {
-    setIsLoading(true);
-  
+    setPlaylistData((prevData) => ({
+      ...prevData,
+      isLoading: true,
+    }));
+
     const formData = new FormData();
-    formData.append('title', songTitle);
+    formData.append('title', playlistData.songTitle);
     formData.append('song', {
-      uri: songUri,
-      type: 'audio/*',
-      name: songOriTitle,
+      uri: playlistData.songUri,
+      type: 'audio/mpeg',
+      name: playlistData.songOriTitle,
     });
-  
+
     axios
       .post('http://10.0.2.2:3000/api/playlist', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        }
+        },
       })
       .then((response) => {
         console.log(response.data.message);
-        setIsLoading(false);
+        setPlaylistData((prevData) => ({
+          ...prevData,
+          isLoading: false,
+        }));
         fetchPlaylist();
         handleResetForm();
       })
       .catch((error) => {
         console.error(error);
-        setIsLoading(false);
+        setPlaylistData((prevData) => ({
+          ...prevData,
+          isLoading: false,
+        }));
       });
-  };  
+  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleSongPress(item)}>
@@ -98,24 +125,19 @@ const PlaylistScreen = () => {
     </TouchableOpacity>
   );
 
+  const { data, isLoading, modalVisible, songTitle, songOriTitle, songUri } = playlistData;
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={playlistData}
+        data={data}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
       />
-      <TouchableOpacity
-        style={styles.uploadButton}
-        onPress={handleFilePick}
-      >
+      <TouchableOpacity style={styles.uploadButton} onPress={handleFilePick}>
         <Text style={styles.uploadButtonText}>Upload Playlist</Text>
       </TouchableOpacity>
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={handleModal}
-      >
+      <Modal visible={modalVisible} animationType="slide" onRequestClose={handleModal}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Upload Song</Text>
           <TextInput
@@ -129,16 +151,12 @@ const PlaylistScreen = () => {
             onPress={handleUploadSong}
             disabled={isLoading || songTitle === ''}
           />
-          <Button
-            title="Cancel"
-            onPress={handleResetForm}
-            color="red"
-          />
+          <Button title="Cancel" onPress={handleResetForm} color="red" />
         </View>
       </Modal>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -184,5 +202,3 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-
-export default PlaylistScreen;

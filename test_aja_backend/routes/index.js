@@ -28,20 +28,19 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    cb(null, file.mimetype === 'audio/mpeg');
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
+
 
 router.get('/music/:song', musicController.getMusic);
 router.get('/playlist', playlistController.getPlaylist);
 router.post('/playlist', upload.single('song'), playlistController.savePlaylist);
-
-process.on('SIGINT', () => {
-  playlistController.closeDatabase();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  playlistController.closeDatabase();
-  process.exit(0);
-});
 
 module.exports = router;

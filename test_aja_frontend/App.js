@@ -8,15 +8,15 @@ import { Provider } from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
-export default function App() {
-  return (
-    <Provider store={store}>
-      <NavigationContainer>
-        <Tab.Navigator>
-          <Tab.Screen name="Media Player" component={Player} />
-          <Tab.Screen name="Playlist" component={PlaylistScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-      </Provider>
-  );
-}
+const App = () => (
+  <Provider store={store}>
+    <NavigationContainer>
+      <Tab.Navigator>
+        <Tab.Screen name="Media Player" component={Player} />
+        <Tab.Screen name="Playlist" component={PlaylistScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  </Provider>
+);
+
+export default App;
