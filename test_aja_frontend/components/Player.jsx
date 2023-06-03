@@ -70,7 +70,7 @@ export default function Player() {
         try {
             await stopAndReset();
             const { sound } = await Audio.Sound.createAsync({
-            uri: `http://10.0.2.2:3000/api/music/${selectedSongUri}`,
+            uri: `http://10.0.2.2:8000/api/music/${selectedSongUri}`,
             });
             setAudio((prevAudio) => ({
             ...prevAudio,

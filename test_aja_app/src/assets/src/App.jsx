@@ -15,7 +15,7 @@ function App() {
 
   const fetchPlaylist = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:3000/api/playlist');
+      const response = await axios.get('http://127.0.0.1:8000/api/playlist');
       const data = response.data;
       setPlaylist(data.playlist);
     } catch (error) {
@@ -48,7 +48,7 @@ function App() {
     formData.append('title', title);
 
     try {
-      await axios.post('http://127.0.0.1:3000/api/playlist', formData);
+      await axios.post('http://127.0.0.1:8000/api/playlist', formData);
       setMessage('Song saved successfully');
       fetchPlaylist();
     } catch (error) {
@@ -67,7 +67,7 @@ function App() {
 
   const playAudio = (song) => {
     setCurrentSong(song);
-    setAudioSrc(`http://127.0.0.1:3000/api/music/${encodeURIComponent(song.song)}`);
+    setAudioSrc(`http://127.0.0.1:8000/api/music/${encodeURIComponent(song.song)}`);
   };
 
   const pauseAudio = () => {

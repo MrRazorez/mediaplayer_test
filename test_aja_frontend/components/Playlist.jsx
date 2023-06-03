@@ -22,7 +22,7 @@ export default function PlaylistScreen() {
 
   const fetchPlaylist = () => {
     axios
-      .get('http://10.0.2.2:3000/api/playlist')
+      .get('http://10.0.2.2:8000/api/playlist')
       .then((response) => {
         setPlaylistData((prevData) => ({
           ...prevData,
@@ -94,7 +94,7 @@ export default function PlaylistScreen() {
     });
 
     axios
-      .post('http://10.0.2.2:3000/api/playlist', formData, {
+      .post('http://10.0.2.2:8000/api/playlist', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
